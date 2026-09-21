@@ -38,4 +38,47 @@ class Product {
       backgroundColor: backgroundColor ?? this.backgroundColor,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'price': price,
+      'category': category,
+      'description': description,
+      'icon': _iconNames[icon] ?? 'smartphone',
+      'backgroundColor':
+          '#${backgroundColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+    };
+  }
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['_id'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      category: json['category'] ?? 'smartphones',
+      description: json['description'] ?? '',
+      icon: _icons[json['icon']] ?? Icons.smartphone,
+      backgroundColor: _colorFromHex(json['backgroundColor']),
+    );
+  }
+
+  static const _icons = <String, IconData>{
+    'smartphone': Icons.smartphone,
+    'laptop': Icons.laptop,
+    'headphones': Icons.headphones,
+    'camera_alt': Icons.camera_alt,
+    'backpack': Icons.backpack,
+    'checkroom': Icons.checkroom,
+  };
+
+  static final _iconNames = <IconData, String>{
+    for (final entry in _icons.entries) entry.value: entry.key,
+  };
+
+  static Color _colorFromHex(dynamic value) {
+    final hex = value is String ? value.replaceFirst('#', '') : 'D4D9F7';
+    final normalized = hex.length == 6 ? 'FF$hex' : hex;
+    return Color(int.tryParse(normalized, radix: 16) ?? 0xFFD4D9F7);
+  }
 }

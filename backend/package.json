@@ -1,0 +1,28 @@
+{
+  "name": "mini-market-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Mini Market Flutter App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.13.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "sqlite",
+    "flutter",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT"
+}

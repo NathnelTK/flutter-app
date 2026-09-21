@@ -103,19 +103,23 @@ The app implements complete CRUD (Create, Read, Update, Delete) functionality:
 
 ## Network Access in Flutter
 
-### Current Implementation (In-Memory Storage)
+### API-Backed Storage
 
-This app uses **in-memory storage** for simplicity and learning purposes:
+The Flutter app uses the Node/Express backend in `backend/` for persistent product and cart storage. The backend uses SQLite, creates `backend/mini-market.sqlite`, and seeds six products automatically on first start. Run `npm install` and `npm start` from that directory before launching Flutter.
+
+The BLoCs delegate CRUD operations to `ProductRepository` and `CartRepository`, which call the REST API at `http://localhost:5000/api` (Android emulators use `10.0.2.2` automatically).
+
+The load flow now delegates to the repository:
 
 ```dart
-// In ProductBloc
-void _onLoadProducts(LoadProducts event, Emitter<ProductState> emit) async {
+Future<void> _onLoadProducts(
+  LoadProducts event,
+  Emitter<ProductState> emit,
+) async {
   emit(ProductLoading());
   try {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    _products = List.from(sampleProducts);
-    emit(ProductLoaded(_products));
+    final products = await repository.getProducts();
+    emit(ProductLoaded(products));
   } catch (e) {
     emit(ProductError(e.toString()));
   }
@@ -440,7 +444,3 @@ flutter build web --release
 ## License
 
 This project is open source and available under the MIT License.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

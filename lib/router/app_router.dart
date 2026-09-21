@@ -29,7 +29,8 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/add-product',
       name: 'add-product',
-      builder: (context, state) => const AddProductScreen(),
+      builder: (context, state) =>
+          AddProductScreen(product: state.extra as Product?),
     ),
   ],
 );

@@ -97,9 +97,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.black),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit feature coming soon')),
-              );
+              context.push('/add-product', extra: widget.product);
             },
           ),
           IconButton(
@@ -127,7 +125,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Icon(
                         widget.product.icon,
                         size: 120,
-                        color: widget.product.backgroundColor.computeLuminance() > 0.5
+                        color:
+                            widget.product.backgroundColor.computeLuminance() >
+                                0.5
                             ? Colors.blue.shade700
                             : Colors.blue.shade300,
                       ),
@@ -187,7 +187,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     color: Colors.black,
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       '$quantity',
                                       style: const TextStyle(

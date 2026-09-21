@@ -5,6 +5,8 @@ import 'package:flutter_app/bloc/product/product_bloc.dart';
 import 'package:flutter_app/bloc/product/product_event.dart';
 import 'package:flutter_app/bloc/cart/cart_bloc.dart';
 import 'package:flutter_app/bloc/cart/cart_event.dart';
+import 'package:flutter_app/repositories/product_repository.dart';
+import 'package:flutter_app/repositories/cart_repository.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,10 +20,12 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => ProductBloc()..add(LoadProducts()),
+          create: (context) =>
+              ProductBloc(repository: ProductRepository())..add(LoadProducts()),
         ),
         BlocProvider(
-          create: (context) => CartBloc()..add(LoadCart()),
+          create: (context) =>
+              CartBloc(repository: CartRepository())..add(LoadCart()),
         ),
       ],
       child: MaterialApp.router(

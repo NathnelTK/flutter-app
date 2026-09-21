@@ -2,63 +2,73 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_app/bloc/product/product_event.dart';
 import 'package:flutter_app/bloc/product/product_state.dart';
 import 'package:flutter_app/models/product.dart';
-import 'package:flutter_app/data/sample_products.dart';
+import 'package:flutter_app/repositories/product_repository.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
+  final ProductRepository repository;
   List<Product> _products = [];
 
-  ProductBloc() : super(ProductInitial()) {
+  ProductBloc({ProductRepository? repository})
+    : repository = repository ?? ProductRepository(),
+      super(ProductInitial()) {
     on<LoadProducts>(_onLoadProducts);
     on<AddProduct>(_onAddProduct);
     on<UpdateProduct>(_onUpdateProduct);
     on<DeleteProduct>(_onDeleteProduct);
   }
 
-  void _onLoadProducts(LoadProducts event, Emitter<ProductState> emit) async {
+  Future<void> _onLoadProducts(
+    LoadProducts event,
+    Emitter<ProductState> emit,
+  ) async {
     emit(ProductLoading());
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
-      _products = List.from(sampleProducts);
-      emit(ProductLoaded(_products));
+      _products = await repository.getProducts();
+      emit(ProductLoaded(List.from(_products)));
     } catch (e) {
       emit(ProductError(e.toString()));
     }
   }
 
-  void _onAddProduct(AddProduct event, Emitter<ProductState> emit) async {
-    if (state is ProductLoaded) {
-      try {
-        _products.add(event.product);
-        emit(ProductLoaded(List.from(_products)));
-      } catch (e) {
-        emit(ProductError(e.toString()));
-      }
+  Future<void> _onAddProduct(
+    AddProduct event,
+    Emitter<ProductState> emit,
+  ) async {
+    try {
+      final product = await repository.createProduct(event.product);
+      _products.add(product);
+      emit(ProductLoaded(List.from(_products)));
+    } catch (e) {
+      emit(ProductError(e.toString()));
     }
   }
 
-  void _onUpdateProduct(UpdateProduct event, Emitter<ProductState> emit) async {
-    if (state is ProductLoaded) {
-      try {
-        final index = _products.indexWhere((p) => p.id == event.id);
-        if (index != -1) {
-          _products[index] = event.product;
-          emit(ProductLoaded(List.from(_products)));
-        }
-      } catch (e) {
-        emit(ProductError(e.toString()));
+  Future<void> _onUpdateProduct(
+    UpdateProduct event,
+    Emitter<ProductState> emit,
+  ) async {
+    try {
+      final product = await repository.updateProduct(event.id, event.product);
+      final index = _products.indexWhere((item) => item.id == event.id);
+      if (index != -1) {
+        _products[index] = product;
+        emit(ProductLoaded(List.from(_products)));
       }
+    } catch (e) {
+      emit(ProductError(e.toString()));
     }
   }
 
-  void _onDeleteProduct(DeleteProduct event, Emitter<ProductState> emit) async {
-    if (state is ProductLoaded) {
-      try {
-        _products.removeWhere((p) => p.id == event.id);
-        emit(ProductLoaded(List.from(_products)));
-      } catch (e) {
-        emit(ProductError(e.toString()));
-      }
+  Future<void> _onDeleteProduct(
+    DeleteProduct event,
+    Emitter<ProductState> emit,
+  ) async {
+    try {
+      await repository.deleteProduct(event.id);
+      _products.removeWhere((product) => product.id == event.id);
+      emit(ProductLoaded(List.from(_products)));
+    } catch (e) {
+      emit(ProductError(e.toString()));
     }
   }
 }

@@ -2,11 +2,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_app/bloc/cart/cart_event.dart';
 import 'package:flutter_app/bloc/cart/cart_state.dart';
 import 'package:flutter_app/models/cart_item.dart';
+import 'package:flutter_app/repositories/cart_repository.dart';
 
 class CartBloc extends Bloc<CartEvent, CartState> {
+  final CartRepository repository;
   List<CartItem> _items = [];
 
-  CartBloc() : super(CartInitial()) {
+  CartBloc({CartRepository? repository})
+    : repository = repository ?? CartRepository(),
+      super(CartInitial()) {
     on<LoadCart>(_onLoadCart);
     on<AddToCart>(_onAddToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
@@ -14,43 +18,68 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<ClearCart>(_onClearCart);
   }
 
-  void _onLoadCart(LoadCart event, Emitter<CartState> emit) {
-    emit(CartLoaded(List.from(_items)));
+  Future<void> _onLoadCart(LoadCart event, Emitter<CartState> emit) async {
+    try {
+      _items = await repository.getCartItems();
+      emit(CartLoaded(List.from(_items)));
+    } catch (e) {
+      emit(CartError(e.toString()));
+    }
   }
 
-  void _onAddToCart(AddToCart event, Emitter<CartState> emit) {
-    final existingIndex = _items.indexWhere((item) => item.product.id == event.product.id);
+  Future<void> _onAddToCart(AddToCart event, Emitter<CartState> emit) async {
+    try {
+      await repository.addToCart(event.product, event.quantity);
+      _items = await repository.getCartItems();
+      emit(CartLoaded(List.from(_items)));
+    } catch (e) {
+      emit(CartError(e.toString()));
+    }
+  }
 
-    if (existingIndex >= 0) {
-      _items[existingIndex] = _items[existingIndex].copyWith(
-        quantity: _items[existingIndex].quantity + event.quantity,
+  Future<void> _onRemoveFromCart(
+    RemoveFromCart event,
+    Emitter<CartState> emit,
+  ) async {
+    try {
+      final item = _items.firstWhere(
+        (item) => item.product.id == event.productId,
       );
-    } else {
-      _items.add(CartItem(product: event.product, quantity: event.quantity));
+      if (item.id != null) await repository.removeFromCart(item.id!);
+      _items = await repository.getCartItems();
+      emit(CartLoaded(List.from(_items)));
+    } catch (e) {
+      emit(CartError(e.toString()));
     }
-
-    emit(CartLoaded(List.from(_items)));
   }
 
-  void _onRemoveFromCart(RemoveFromCart event, Emitter<CartState> emit) {
-    _items.removeWhere((item) => item.product.id == event.productId);
-    emit(CartLoaded(List.from(_items)));
-  }
-
-  void _onUpdateCartQuantity(UpdateCartQuantity event, Emitter<CartState> emit) {
-    if (event.quantity <= 0) {
-      _items.removeWhere((item) => item.product.id == event.productId);
-    } else {
-      final index = _items.indexWhere((item) => item.product.id == event.productId);
-      if (index != -1) {
-        _items[index] = _items[index].copyWith(quantity: event.quantity);
+  Future<void> _onUpdateCartQuantity(
+    UpdateCartQuantity event,
+    Emitter<CartState> emit,
+  ) async {
+    try {
+      final item = _items.firstWhere(
+        (item) => item.product.id == event.productId,
+      );
+      if (event.quantity <= 0) {
+        if (item.id != null) await repository.removeFromCart(item.id!);
+      } else {
+        await repository.updateQuantity(item.id!, event.quantity);
       }
+      _items = await repository.getCartItems();
+      emit(CartLoaded(List.from(_items)));
+    } catch (e) {
+      emit(CartError(e.toString()));
     }
-    emit(CartLoaded(List.from(_items)));
   }
 
-  void _onClearCart(ClearCart event, Emitter<CartState> emit) {
-    _items.clear();
-    emit(CartLoaded(List.from(_items)));
+  Future<void> _onClearCart(ClearCart event, Emitter<CartState> emit) async {
+    try {
+      await repository.clearCart();
+      _items = [];
+      emit(CartLoaded(List.from(_items)));
+    } catch (e) {
+      emit(CartError(e.toString()));
+    }
   }
 }
