@@ -48,6 +48,7 @@ The server will start on `http://localhost:5000`
 
 ### Products
 - `GET /api/products` - Get all products
+- `GET /api/products/categories` - Get the distinct product categories
 - `GET /api/products/:id` - Get single product
 - `POST /api/products` - Create new product
 - `PUT /api/products/:id` - Update product
@@ -55,10 +56,14 @@ The server will start on `http://localhost:5000`
 
 ### Cart
 - `GET /api/cart` - Get all cart items
+- `GET /api/cart/summary` - Get cart item count, quantity, and total
 - `POST /api/cart` - Add item to cart
 - `PUT /api/cart/:id` - Update cart item quantity
 - `DELETE /api/cart/:id` - Remove item from cart
 - `DELETE /api/cart` - Clear all cart items
+
+### Checkout
+- `POST /api/checkout` - Complete checkout, return the order total, and clear the cart
 
 ### Health Check
 - `GET /api/health` - Check server status

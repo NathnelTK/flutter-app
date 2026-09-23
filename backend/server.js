@@ -95,6 +95,12 @@ async function startServer() {
     res.json(query(database, 'SELECT * FROM products ORDER BY createdAt DESC, id DESC').map(productFromRow));
   });
 
+  app.get('/api/products/categories', (req, res) => {
+    const categories = query(database, 'SELECT DISTINCT category FROM products ORDER BY category ASC')
+      .map((row) => row.category);
+    res.json(categories);
+  });
+
   app.get('/api/products/:id', (req, res) => {
     const product = productFromRow(readProduct(req.params.id));
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -138,6 +144,21 @@ async function startServer() {
     res.json(items.map(cartItemFromRow));
   });
 
+  app.get('/api/cart/summary', (req, res) => {
+    const summary = query(database, `
+      SELECT COUNT(*) AS itemCount,
+             COALESCE(SUM(c.quantity), 0) AS quantity,
+             COALESCE(SUM(c.quantity * p.price), 0) AS total
+      FROM cart_items c
+      JOIN products p ON p.id = c.productId
+    `)[0];
+    res.json({
+      itemCount: Number(summary.itemCount),
+      quantity: Number(summary.quantity),
+      total: Number(summary.total),
+    });
+  });
+
   app.post('/api/cart', (req, res) => {
     try {
       const productId = Number(req.body.productId);
@@ -175,6 +196,26 @@ async function startServer() {
     database.run('DELETE FROM cart_items');
     saveDatabase(database);
     res.json({ message: 'Cart cleared successfully' });
+  });
+
+  app.post('/api/checkout', (req, res) => {
+    const summary = query(database, `
+      SELECT COUNT(*) AS itemCount,
+             COALESCE(SUM(c.quantity), 0) AS quantity,
+             COALESCE(SUM(c.quantity * p.price), 0) AS total
+      FROM cart_items c
+      JOIN products p ON p.id = c.productId
+    `)[0];
+    if (Number(summary.itemCount) === 0) return res.status(400).json({ error: 'Cart is empty' });
+
+    database.run('DELETE FROM cart_items');
+    saveDatabase(database);
+    res.status(201).json({
+      message: 'Checkout completed successfully',
+      itemCount: Number(summary.itemCount),
+      quantity: Number(summary.quantity),
+      total: Number(summary.total),
+    });
   });
 
   app.get('/api/health', (req, res) => res.json({ status: 'OK', database: 'sqlite', timestamp: new Date() }));
